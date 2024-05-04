@@ -1,0 +1,40 @@
+pipeline {
+    agent any
+    stages {
+        stage('Latest Build') {
+            steps {
+                sh 'cd /home/jenkins/prod/SimpliClarifyMentorBackend'
+                sh 'git config remote.origin.url git@github.com:SimpliClariFy/SimpliClarifyMentorBackend.git'
+		        sh 'git checkout master'
+                sh 'git pull origin master'
+            }
+        }
+        stage('Build & Deploy Docker Container') {
+            steps {
+                sh 'docker build -t simpliclarify/prod-mentor-api .'
+                sh 'docker run --name prod-mentor-api -p 3080:3080 --env-file /home/jenkins/.env-prod-mentor --restart always -v /home/ubuntu/.aws/credentials:/home/node/.aws/credentials -d simpliclarify/prod-mentor-api'
+            }
+        }
+        stage('Push docker image to AWS registry') {
+            steps {
+                sh 'docker tag simpliclarify/prod-mentor-api 101602609699.dkr.ecr.ap-south-1.amazonaws.com/prod-mentor-api'
+                sh 'aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 101602609699.dkr.ecr.ap-south-1.amazonaws.com'
+                sh 'docker push 101602609699.dkr.ecr.ap-south-1.amazonaws.com/prod-mentor-api'
+            }
+        }
+        stage('Flush System Server') {
+            steps {
+                sh 'docker rm -f prod-mentor-api'
+                sh 'docker system prune -f'
+            }
+        }
+        stage('Production Deployment Ready') {
+            steps {
+                sh 'ssh ubuntu@13.235.64.150 "aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 101602609699.dkr.ecr.ap-south-1.amazonaws.com"'
+                sh 'ssh ubuntu@13.235.64.150 "docker pull 101602609699.dkr.ecr.ap-south-1.amazonaws.com/prod-mentor-api"'
+                sh 'ssh ubuntu@13.235.64.150 "docker rm -f prod-mentor-api"'
+                sh 'ssh ubuntu@13.235.64.150 "docker run --name prod-mentor-api -p 3080:3080 --env-file /home/ubuntu/.env.mentor.prod --restart always -v /home/ubuntu/.aws/credentials:/home/node/.aws/credentials -d 101602609699.dkr.ecr.ap-south-1.amazonaws.com/prod-mentor-api"'
+            }
+        }
+    }
+}

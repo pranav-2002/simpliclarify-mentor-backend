@@ -1,0 +1,7 @@
+node_modules
+.vscode
+start-windows-server.bat
+access.log
+*.bat
+*.pem
+*.sh

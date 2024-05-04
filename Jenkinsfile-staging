@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+    stages {
+        stage('Latest Build') {
+            steps {
+                sh 'cd /home/jenkins/staging/SimpliClarifyMentorBackend'
+                sh 'git config remote.origin.url git@github.com:SimpliClariFy/SimpliClarifyMentorBackend.git'
+		        sh 'git checkout staging'
+                sh 'git pull origin staging'
+            }
+        }
+        stage('Build & Deploy Docker Container') {
+            steps {
+                sh 'docker build -t simpliclarify/staging-mentor-api .'
+                sh 'docker run --name staging-mentor-api -p 3080:3080 --env-file /home/jenkins/.env-staging-mentor --restart always -v /home/ubuntu/.aws/credentials:/home/node/.aws/credentials -d simpliclarify/staging-mentor-api'
+            }
+        }
+        // stage('Integration Testing') {
+        //     steps {
+        //         sh 'git config remote.origin.url git@github.com:SimpliClariFy/SimpliClarifyMentorBackend.git'
+        //         sh 'git pull origin staging'
+        //         sh 'npm install'
+        //         sh 'npm run test'
+        //     }
+        // }
+        stage('Push docker image to AWS registry') {
+            steps {
+                sh 'docker tag simpliclarify/staging-mentor-api 101602609699.dkr.ecr.ap-south-1.amazonaws.com/staging-mentor'
+                sh 'aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 101602609699.dkr.ecr.ap-south-1.amazonaws.com'
+                sh 'docker push 101602609699.dkr.ecr.ap-south-1.amazonaws.com/staging-mentor'
+            }
+        }
+        stage('Flush System Server') {
+            steps {
+                sh 'docker rm -f staging-mentor-api'
+                sh 'docker system prune -f'
+            }
+        }
+        stage('Staging Deployment') {
+            steps {
+                sh 'ssh -i /home/ubuntu/simp.pem ubuntu@15.206.94.249 "aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 101602609699.dkr.ecr.ap-south-1.amazonaws.com"'
+                sh 'ssh -i /home/ubuntu/simp.pem ubuntu@15.206.94.249 "docker pull 101602609699.dkr.ecr.ap-south-1.amazonaws.com/staging-mentor"'
+                sh 'ssh -i /home/ubuntu/simp.pem ubuntu@15.206.94.249 "docker rm -f staging-mentor-api"'
+                sh 'ssh -i /home/ubuntu/simp.pem ubuntu@15.206.94.249 "docker run --name staging-mentor-api -p 3080:3080 --env-file /home/ubuntu/.env-staging-mentor --restart always -v /home/ubuntu/.aws/credentials:/home/node/.aws/credentials -d 101602609699.dkr.ecr.ap-south-1.amazonaws.com/staging-mentor"'
+            }
+        }
+    }
+}
