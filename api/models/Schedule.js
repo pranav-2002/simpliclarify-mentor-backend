@@ -141,8 +141,12 @@ async function updateDates() {
 }
 
 function scheduleJob() {
-  // updateDates()
-  // nodeSchedule.scheduleJob('RECURRING JOB FOR ADDING MENTOR SCHEDULE', '0 0 * * *', updateDates)
+  updateDates();
+  nodeSchedule.scheduleJob(
+    "RECURRING JOB FOR ADDING MENTOR SCHEDULE",
+    "0 0 * * *",
+    updateDates
+  );
 }
 
 scheduleJob();
