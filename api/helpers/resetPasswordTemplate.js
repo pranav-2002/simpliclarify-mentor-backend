@@ -1,4 +1,4 @@
-export function resetPasswordTemplate (name, password) {
+export function resetPasswordTemplate(name, password) {
   return `
     <html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office"
         xmlns:v="urn:schemas-microsoft-com:vml">
@@ -294,9 +294,9 @@ export function resetPasswordTemplate (name, password) {
                                                             style="margin: 0; text-align: center; line-height: 1.5; word-break: break-word; font-size: 10px; mso-line-height-alt: 15px; margin-top: 0; margin-bottom: 0;">
                                                             <span style="font-size: 10px;">If this password request was
                                                                 not made by you, write to us at <a
-                                                                    href="mailto:hello@simpliclarify.com" rel="noopener"
+                                                                    href="mailto:probuddy.tech@gmail.com" rel="noopener"
                                                                     style="color: #21379a;"
-                                                                    target="_blank">hello@simpliclarify.com</a></span>
+                                                                    target="_blank">simpliclarify.tech@gmail com</a></span>
                                                         </p>
                                                     </div>
                                                 </div>
@@ -431,5 +431,5 @@ export function resetPasswordTemplate (name, password) {
         <!--[if (IE)]></div><![endif]-->
     </body>
 
-    </html>`
+    </html>`;
 }
